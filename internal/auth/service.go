@@ -188,14 +188,20 @@ func (s *Service) generateToken(user *User, expiry time.Duration) (string, error
 }
 func (s *Service) RefreshToken(ctx context.Context, refreshToken string) (*AuthResponse, error) {
 	claims := jwt.MapClaims{}
-	_, err := jwt.ParseWithClaims(refreshToken, claims, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(refreshToken, claims, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrSignatureInvalid
+		}
 		return []byte(s.jwtSecret), nil
 	})
-	if err != nil {
+	if err != nil || !token.Valid {
 		return nil, ErrInvalidCredentials
 	}
 
-	userID := claims["sub"].(string)
+	userID, ok := claims["sub"].(string)
+	if !ok || userID == "" {
+		return nil, ErrInvalidCredentials
+	}
 	user, err := s.repo.GetByID(ctx, userID)
 	if err != nil {
 		return nil, ErrUserNotFound

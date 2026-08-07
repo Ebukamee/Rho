@@ -3,15 +3,17 @@ package config
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	Port            string
-	DatabaseURL     string
-	JWTSecret       string
-	GoogleClientID  string
+	Port               string
+	DatabaseURL        string
+	JWTSecret          string
+	CORSOrigins        []string
+	GoogleClientID     string
 	GoogleClientSecret string
 	GoogleRedirectURL  string
 }
@@ -25,6 +27,7 @@ func Load() *Config {
 		Port:               getEnv("PORT", "8080"),
 		DatabaseURL:        getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/rho?sslmode=disable"),
 		JWTSecret:          getEnv("JWT_SECRET", ""),
+		CORSOrigins:        splitCSV(getEnv("CORS_ORIGINS", "http://localhost:3000")),
 		GoogleClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
 		GoogleClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
 		GoogleRedirectURL:  getEnv("GOOGLE_REDIRECT_URL", "http://localhost:8080/api/v1/auth/google/callback"),
@@ -36,4 +39,15 @@ func getEnv(key, fallback string) string {
 		return val
 	}
 	return fallback
+}
+
+func splitCSV(value string) []string {
+	parts := strings.Split(value, ",")
+	origins := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if origin := strings.TrimSpace(part); origin != "" {
+			origins = append(origins, origin)
+		}
+	}
+	return origins
 }
