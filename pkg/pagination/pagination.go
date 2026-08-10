@@ -12,6 +12,12 @@ const (
 	MaxLimit     = 100
 )
 
+type Params struct {
+	Page   int
+	Limit  int
+	Offset int
+}
+
 func Parse(c *gin.Context) Params {
 	page := positiveInt(c.Query("page"), DefaultPage)
 	limit := positiveInt(c.Query("limit"), DefaultLimit)
