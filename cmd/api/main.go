@@ -9,6 +9,7 @@ import (
 	"github.com/rho-commerce/rho/internal/config"
 	"github.com/rho-commerce/rho/internal/database"
 	"github.com/rho-commerce/rho/internal/middleware"
+	applogger "github.com/rho-commerce/rho/pkg/logger"
 )
 
 func main() {
@@ -16,6 +17,8 @@ func main() {
 	if cfg.JWTSecret == "" {
 		log.Fatal("JWT_SECRET must be set")
 	}
+
+	appLogger := applogger.New(cfg.Environment)
 
 	db := database.Connect(cfg.DatabaseURL)
 	defer db.Close()
@@ -32,17 +35,26 @@ func main() {
 
 	router := gin.New()
 	router.Use(
+		middleware.RequestLogger(appLogger),
 		middleware.CORS(cfg.CORSOrigins),
-		gin.Logger(),
 		gin.Recovery(),
 	)
+
 	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+		c.JSON(http.StatusOK, gin.H{
+			"status": "ok",
+		})
 	})
 
 	auth.RegisterRoutes(router, authHandler, cfg.JWTSecret)
 
+	appLogger.Info(
+		"starting Rho API",
+		"environment", cfg.Environment,
+		"port", cfg.Port,
+	)
+
 	if err := router.Run(":" + cfg.Port); err != nil {
-		log.Fatalf("server failed to start: %v", err)
+		appLogger.Error("server stopped", "error", err)
 	}
 }

@@ -10,6 +10,7 @@ import (
 
 type Config struct {
 	Port               string
+	Environment        string
 	DatabaseURL        string
 	JWTSecret          string
 	CORSOrigins        []string
@@ -25,6 +26,7 @@ func Load() *Config {
 
 	return &Config{
 		Port:               getEnv("PORT", "8080"),
+		Environment:        getEnv("ENVIRONMENT", "development"),
 		DatabaseURL:        getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/rho?sslmode=disable"),
 		JWTSecret:          getEnv("JWT_SECRET", ""),
 		CORSOrigins:        splitCSV(getEnv("CORS_ORIGINS", "http://localhost:3000")),

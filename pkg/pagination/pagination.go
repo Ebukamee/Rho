@@ -3,7 +3,7 @@ package pagination
 import (
 	"strconv"
 
-	"github.com/gin-conic/gin"
+	"github.com/gin-gonic/gin"
 )
 
 const (

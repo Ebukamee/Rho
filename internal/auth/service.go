@@ -157,12 +157,12 @@ func (s *Service) ListUsers(ctx context.Context, page, limit int) (*UserListResp
 }
 
 func (s *Service) generateAuthResponse(user *User) (*AuthResponse, error) {
-	accessToken, err := s.generateToken(user, 15*time.Minute)
+	accessToken, err := s.generateToken(user, "access", 15*time.Minute)
 	if err != nil {
 		return nil, err
 	}
 
-	refreshToken, err := s.generateToken(user, 7*24*time.Hour)
+	refreshToken, err := s.generateToken(user, "refresh", 7*24*time.Hour)
 	if err != nil {
 		return nil, err
 	}
@@ -174,13 +174,14 @@ func (s *Service) generateAuthResponse(user *User) (*AuthResponse, error) {
 	}, nil
 }
 
-func (s *Service) generateToken(user *User, expiry time.Duration) (string, error) {
+func (s *Service) generateToken(user *User, tokenType string, expiry time.Duration) (string, error) {
 	claims := jwt.MapClaims{
-		"sub":   user.ID,
-		"email": user.Email,
-		"role":  user.Role,
-		"exp":   time.Now().Add(expiry).Unix(),
-		"iat":   time.Now().Unix(),
+		"sub":        user.ID,
+		"email":      user.Email,
+		"role":       user.Role,
+		"token_type": tokenType,
+		"exp":        time.Now().Add(expiry).Unix(),
+		"iat":        time.Now().Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -188,13 +189,21 @@ func (s *Service) generateToken(user *User, expiry time.Duration) (string, error
 }
 func (s *Service) RefreshToken(ctx context.Context, refreshToken string) (*AuthResponse, error) {
 	claims := jwt.MapClaims{}
-	token, err := jwt.ParseWithClaims(refreshToken, claims, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, jwt.ErrSignatureInvalid
-		}
-		return []byte(s.jwtSecret), nil
-	})
+	token, err := jwt.ParseWithClaims(
+		refreshToken,
+		claims,
+		func(token *jwt.Token) (any, error) {
+			return []byte(s.jwtSecret), nil
+		},
+		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}),
+		jwt.WithExpirationRequired(),
+	)
 	if err != nil || !token.Valid {
+		return nil, ErrInvalidCredentials
+	}
+
+	tokenType, ok := claims["token_type"].(string)
+	if !ok || tokenType != "refresh" {
 		return nil, ErrInvalidCredentials
 	}
 
