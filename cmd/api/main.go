@@ -6,6 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rho-commerce/rho/internal/auth"
+	"github.com/rho-commerce/rho/internal/cart"
+	"github.com/rho-commerce/rho/internal/category"
 	"github.com/rho-commerce/rho/internal/config"
 	"github.com/rho-commerce/rho/internal/database"
 	"github.com/rho-commerce/rho/internal/middleware"
@@ -43,6 +45,18 @@ func main() {
 	productRepository := product.NewRepository(db)
 	productService := product.NewService(productRepository)
 	productHandler := product.NewHandler(productService)
+
+	cartRepo := cart.NewRepository(db)
+	cartService := cart.NewService(cartRepo)
+	cartHandler := cart.NewHandler(cartService)
+
+	cart.RegisterRoutes(router, cartHandler, cfg.JWTSecret)
+
+	categoryRepo := category.NewRepository(db)
+	categoryService := category.NewService(categoryRepo)
+	categoryHandler := category.NewHandler(categoryService)
+
+	category.RegisterRoutes(router, categoryHandler, cfg.JWTSecret)
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
