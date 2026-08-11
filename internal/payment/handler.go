@@ -32,6 +32,7 @@ func (h *Handler) Initialize(c *gin.Context) {
 		req,
 		req.OrderID,
 		c.GetString("user_id"),
+		"",
 		0,
 		"",
 	)
