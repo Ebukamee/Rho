@@ -34,6 +34,7 @@ func (s *Service) Initialize(
 	ctx context.Context,
 	req InitializePaymentRequest,
 	orderID string,
+	email string,
 	userID string,
 	amount int64,
 	currency string,
@@ -63,6 +64,7 @@ func (s *Service) Initialize(
 	initialization, err := provider.Initialize(
 		ctx,
 		payment,
+		email,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("initialize payment: %w", err)
