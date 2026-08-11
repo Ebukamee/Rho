@@ -23,6 +23,7 @@ func (s *Service) Create(ctx context.Context, req CreateProductRequest) (*Produc
 
 	product := &Product{
 		ID:          uuid.NewString(),
+		CategoryID:  req.CategoryID,
 		Name:        strings.TrimSpace(req.Name),
 		Slug:        strings.TrimSpace(req.Slug),
 		Description: req.Description,
@@ -50,8 +51,20 @@ func (s *Service) GetByID(ctx context.Context, id string) (*Product, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
-func (s *Service) List(ctx context.Context, page, limit int, activeOnly bool) (*ProductListResponse, error) {
-	products, total, err := s.repo.List(ctx, page, limit, activeOnly)
+func (s *Service) List(
+	ctx context.Context,
+	page, limit int,
+	activeOnly bool,
+	categoryID *string,
+) (*ProductListResponse, error) {
+	products, total, err := s.repo.List(
+		ctx,
+		page,
+		limit,
+		activeOnly,
+		categoryID,
+	)
+
 	if err != nil {
 		return nil, fmt.Errorf("list products: %w", err)
 	}
@@ -65,10 +78,18 @@ func (s *Service) List(ctx context.Context, page, limit int, activeOnly bool) (*
 	}, nil
 }
 
-func (s *Service) Update(ctx context.Context, id string, req UpdateProductRequest) (*Product, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	id string,
+	req UpdateProductRequest,
+) (*Product, error) {
 	product, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+
+	if req.CategoryID != nil {
+		product.CategoryID = req.CategoryID
 	}
 
 	if req.Name != "" {

@@ -71,11 +71,18 @@ func (h *Handler) Get(c *gin.Context) {
 func (h *Handler) List(c *gin.Context) {
 	params := pagination.Parse(c)
 
+	var categoryID *string
+
+	if value := c.Query("category_id"); value != "" {
+		categoryID = &value
+	}
+
 	products, err := h.service.List(
 		c.Request.Context(),
 		params.Page,
 		params.Limit,
 		true,
+		categoryID,
 	)
 
 	if err != nil {
@@ -97,11 +104,18 @@ func (h *Handler) AdminList(c *gin.Context) {
 		activeOnly, _ = strconv.ParseBool(value)
 	}
 
+	var categoryID *string
+
+	if value := c.Query("category_id"); value != "" {
+		categoryID = &value
+	}
+
 	products, err := h.service.List(
 		c.Request.Context(),
 		params.Page,
 		params.Limit,
 		activeOnly,
+		categoryID,
 	)
 
 	if err != nil {
