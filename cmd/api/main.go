@@ -13,6 +13,7 @@ import (
 	"github.com/rho-commerce/rho/internal/discount"
 	"github.com/rho-commerce/rho/internal/inventory"
 	"github.com/rho-commerce/rho/internal/middleware"
+	"github.com/rho-commerce/rho/internal/order"
 	"github.com/rho-commerce/rho/internal/product"
 	applogger "github.com/rho-commerce/rho/pkg/logger"
 )
@@ -78,6 +79,12 @@ func main() {
 		discountHandler,
 		cfg.JWTSecret,
 	)
+
+	orderRepo := order.NewRepository(db)
+	orderService := order.NewService(orderRepo)
+	orderHandler := order.NewHandler(orderService)
+
+	order.RegisterRoutes(router, orderHandler, cfg.JWTSecret)
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
