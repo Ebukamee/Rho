@@ -14,6 +14,7 @@ import (
 	"github.com/rho-commerce/rho/internal/inventory"
 	"github.com/rho-commerce/rho/internal/middleware"
 	"github.com/rho-commerce/rho/internal/order"
+	"github.com/rho-commerce/rho/internal/payment"
 	"github.com/rho-commerce/rho/internal/product"
 	applogger "github.com/rho-commerce/rho/pkg/logger"
 )
@@ -85,6 +86,25 @@ func main() {
 	orderHandler := order.NewHandler(orderService)
 
 	order.RegisterRoutes(router, orderHandler, cfg.JWTSecret)
+
+	paymentRepo := payment.NewRepository(db)
+
+	paymentProviders := payment.NewProviderRegistry()
+
+	paymentService := payment.NewService(
+		paymentRepo,
+		paymentProviders,
+	)
+
+	paymentHandler := payment.NewHandler(
+		paymentService,
+	)
+
+	payment.RegisterRoutes(
+		router,
+		paymentHandler,
+		cfg.JWTSecret,
+	)
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
