@@ -8,24 +8,37 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rho-commerce/rho/internal/order"
 )
 
 var (
-	ErrProviderNotFound = errors.New("payment provider not found")
-	ErrInvalidStatus    = errors.New("invalid payment status")
+	ErrProviderNotFound = errors.New(
+		"payment provider not found",
+	)
+
+	ErrInvalidStatus = errors.New(
+		"invalid payment status",
+	)
+
+	ErrOrderNotPayable = errors.New(
+		"order is not payable",
+	)
 )
 
 type Service struct {
 	repo      *Repository
+	orderRepo *order.Repository
 	providers *ProviderRegistry
 }
 
 func NewService(
 	repo *Repository,
+	orderRepo *order.Repository,
 	providers *ProviderRegistry,
 ) *Service {
 	return &Service{
 		repo:      repo,
+		orderRepo: orderRepo,
 		providers: providers,
 	}
 }
@@ -33,14 +46,26 @@ func NewService(
 func (s *Service) Initialize(
 	ctx context.Context,
 	req InitializePaymentRequest,
-	orderID string,
-	email string,
 	userID string,
-	amount int64,
-	currency string,
+	email string,
 ) (*PaymentInitialization, error) {
 
-	providerName := strings.ToLower(strings.TrimSpace(req.Provider))
+	orderData, err := s.orderRepo.GetByIDForUser(
+		ctx,
+		req.OrderID,
+		userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if orderData.Status != "pending" {
+		return nil, ErrOrderNotPayable
+	}
+
+	providerName := strings.ToLower(
+		strings.TrimSpace(req.Provider),
+	)
 
 	provider, ok := s.providers.Get(providerName)
 	if !ok {
@@ -51,11 +76,11 @@ func (s *Service) Initialize(
 
 	payment := &Payment{
 		ID:        uuid.NewString(),
-		OrderID:   orderID,
+		OrderID:   orderData.ID,
 		UserID:    userID,
 		Provider:  providerName,
-		Amount:    amount,
-		Currency:  currency,
+		Amount:    orderData.Total,
+		Currency:  orderData.Currency,
 		Status:    PaymentPending,
 		CreatedAt: now,
 		UpdatedAt: now,
@@ -67,13 +92,22 @@ func (s *Service) Initialize(
 		email,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("initialize payment: %w", err)
+		return nil, fmt.Errorf(
+			"initialize payment: %w",
+			err,
+		)
 	}
 
 	payment.ProviderRef = initialization.ProviderRef
 
-	if err := s.repo.Create(ctx, payment); err != nil {
-		return nil, fmt.Errorf("create payment: %w", err)
+	if err := s.repo.Create(
+		ctx,
+		payment,
+	); err != nil {
+		return nil, fmt.Errorf(
+			"create payment: %w",
+			err,
+		)
 	}
 
 	initialization.PaymentID = payment.ID
@@ -93,12 +127,17 @@ func (s *Service) Verify(
 	id string,
 ) (*Payment, error) {
 
-	payment, err := s.repo.GetByID(ctx, id)
+	payment, err := s.repo.GetByID(
+		ctx,
+		id,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	provider, ok := s.providers.Get(payment.Provider)
+	provider, ok := s.providers.Get(
+		payment.Provider,
+	)
 	if !ok {
 		return nil, ErrProviderNotFound
 	}
@@ -108,7 +147,10 @@ func (s *Service) Verify(
 		payment.ProviderRef,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("verify payment: %w", err)
+		return nil, fmt.Errorf(
+			"verify payment: %w",
+			err,
+		)
 	}
 
 	switch result.Status {
@@ -116,6 +158,7 @@ func (s *Service) Verify(
 		PaymentSucceeded,
 		PaymentFailed,
 		PaymentRefunded:
+
 	default:
 		return nil, ErrInvalidStatus
 	}

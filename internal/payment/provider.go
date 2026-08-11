@@ -32,7 +32,9 @@ func (r *ProviderRegistry) Register(
 	r.providers[name] = provider
 }
 
-func (r *ProviderRegistry) Get(name string) (Provider, bool) {
+func (r *ProviderRegistry) Get(
+	name string,
+) (Provider, bool) {
 	provider, ok := r.providers[name]
 	return provider, ok
 }

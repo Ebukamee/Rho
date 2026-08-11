@@ -16,7 +16,7 @@ type Payment struct {
 	OrderID     string        `json:"order_id"`
 	UserID      string        `json:"user_id"`
 	Provider    string        `json:"provider"`
-	ProviderRef string        `json:"provider_ref"`
+	ProviderRef string        `json:"provider_ref,omitempty"`
 	Amount      int64         `json:"amount"`
 	Currency    string        `json:"currency"`
 	Status      PaymentStatus `json:"status"`

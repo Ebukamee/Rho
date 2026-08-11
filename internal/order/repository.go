@@ -194,3 +194,45 @@ func (r *Repository) UpdateStatus(
 
 	return nil
 }
+func (r *Repository) GetByIDForUser(
+	ctx context.Context,
+	orderID string,
+	userID string,
+) (*Order, error) {
+	var order Order
+
+	err := r.db.QueryRow(ctx, `
+		SELECT
+			id,
+			user_id,
+			status,
+			subtotal,
+			discount,
+			total,
+			currency,
+			created_at,
+			updated_at
+		FROM orders
+		WHERE id = $1 AND user_id = $2
+	`, orderID, userID).Scan(
+		&order.ID,
+		&order.UserID,
+		&order.Status,
+		&order.Subtotal,
+		&order.Discount,
+		&order.Total,
+		&order.Currency,
+		&order.CreatedAt,
+		&order.UpdatedAt,
+	)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &order, nil
+}

@@ -12,7 +12,9 @@ type Handler struct {
 }
 
 func NewHandler(service *Service) *Handler {
-	return &Handler{service: service}
+	return &Handler{
+		service: service,
+	}
 }
 
 func (h *Handler) Initialize(c *gin.Context) {
@@ -25,29 +27,36 @@ func (h *Handler) Initialize(c *gin.Context) {
 		return
 	}
 
-	// Order ownership and amount validation will be handled
-	// by Checkout once that module is connected.
 	result, err := h.service.Initialize(
 		c.Request.Context(),
 		req,
-		req.OrderID,
 		c.GetString("user_id"),
-		"",
-		0,
-		"",
+		c.GetString("email"),
 	)
 
 	if err != nil {
-		if errors.Is(err, ErrProviderNotFound) {
+		switch {
+		case errors.Is(err, ErrNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "order not found",
+			})
+
+		case errors.Is(err, ErrProviderNotFound):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "payment provider not supported",
 			})
-			return
+
+		case errors.Is(err, ErrOrderNotPayable):
+			c.JSON(http.StatusConflict, gin.H{
+				"error": "order is not payable",
+			})
+
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "failed to initialize payment",
+			})
 		}
 
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "failed to initialize payment",
-		})
 		return
 	}
 

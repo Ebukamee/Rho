@@ -57,7 +57,8 @@ func (r *Repository) Create(
 
 	var pgErr *pgconn.PgError
 
-	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+	if errors.As(err, &pgErr) &&
+		pgErr.Code == "23505" {
 		return ErrConflict
 	}
 
@@ -68,7 +69,7 @@ func (r *Repository) GetByID(
 	ctx context.Context,
 	id string,
 ) (*Payment, error) {
-	var p Payment
+	var payment Payment
 
 	err := r.db.QueryRow(ctx, `
 		SELECT
@@ -85,16 +86,16 @@ func (r *Repository) GetByID(
 		FROM payments
 		WHERE id = $1
 	`, id).Scan(
-		&p.ID,
-		&p.OrderID,
-		&p.UserID,
-		&p.Provider,
-		&p.ProviderRef,
-		&p.Amount,
-		&p.Currency,
-		&p.Status,
-		&p.CreatedAt,
-		&p.UpdatedAt,
+		&payment.ID,
+		&payment.OrderID,
+		&payment.UserID,
+		&payment.Provider,
+		&payment.ProviderRef,
+		&payment.Amount,
+		&payment.Currency,
+		&payment.Status,
+		&payment.CreatedAt,
+		&payment.UpdatedAt,
 	)
 
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -105,51 +106,7 @@ func (r *Repository) GetByID(
 		return nil, err
 	}
 
-	return &p, nil
-}
-
-func (r *Repository) GetByProviderRef(
-	ctx context.Context,
-	providerRef string,
-) (*Payment, error) {
-	var p Payment
-
-	err := r.db.QueryRow(ctx, `
-		SELECT
-			id,
-			order_id,
-			user_id,
-			provider,
-			provider_ref,
-			amount,
-			currency,
-			status,
-			created_at,
-			updated_at
-		FROM payments
-		WHERE provider_ref = $1
-	`, providerRef).Scan(
-		&p.ID,
-		&p.OrderID,
-		&p.UserID,
-		&p.Provider,
-		&p.ProviderRef,
-		&p.Amount,
-		&p.Currency,
-		&p.Status,
-		&p.CreatedAt,
-		&p.UpdatedAt,
-	)
-
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, ErrNotFound
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &p, nil
+	return &payment, nil
 }
 
 func (r *Repository) UpdateStatus(
@@ -177,4 +134,48 @@ func (r *Repository) UpdateStatus(
 	}
 
 	return nil
+}
+
+func (r *Repository) GetByProviderRef(
+	ctx context.Context,
+	providerRef string,
+) (*Payment, error) {
+	var payment Payment
+
+	err := r.db.QueryRow(ctx, `
+		SELECT
+			id,
+			order_id,
+			user_id,
+			provider,
+			provider_ref,
+			amount,
+			currency,
+			status,
+			created_at,
+			updated_at
+		FROM payments
+		WHERE provider_ref = $1
+	`, providerRef).Scan(
+		&payment.ID,
+		&payment.OrderID,
+		&payment.UserID,
+		&payment.Provider,
+		&payment.ProviderRef,
+		&payment.Amount,
+		&payment.Currency,
+		&payment.Status,
+		&payment.CreatedAt,
+		&payment.UpdatedAt,
+	)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &payment, nil
 }

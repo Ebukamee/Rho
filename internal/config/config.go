@@ -13,6 +13,7 @@ type Config struct {
 	Environment        string
 	DatabaseURL        string
 	JWTSecret          string
+	PaystackSecretKey  string
 	CORSOrigins        []string
 	GoogleClientID     string
 	GoogleClientSecret string
@@ -29,6 +30,7 @@ func Load() *Config {
 		Environment:        getEnv("ENVIRONMENT", "development"),
 		DatabaseURL:        getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/rho?sslmode=disable"),
 		JWTSecret:          getEnv("JWT_SECRET", ""),
+		PaystackSecretKey:  getEnv("PAYSTACK_SECRET_KEY", ""),
 		CORSOrigins:        splitCSV(getEnv("CORS_ORIGINS", "http://localhost:3000")),
 		GoogleClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
 		GoogleClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),

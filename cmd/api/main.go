@@ -91,8 +91,18 @@ func main() {
 
 	paymentProviders := payment.NewProviderRegistry()
 
+	paystackProvider := payment.NewPaystackProvider(
+		cfg.PaystackSecretKey,
+	)
+
+	paymentProviders.Register(
+		"paystack",
+		paystackProvider,
+	)
+
 	paymentService := payment.NewService(
 		paymentRepo,
+		orderRepo,
 		paymentProviders,
 	)
 

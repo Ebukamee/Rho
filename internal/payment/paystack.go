@@ -55,7 +55,9 @@ func (p *PaystackProvider) Initialize(
 ) (*PaymentInitialization, error) {
 
 	if strings.TrimSpace(p.secretKey) == "" {
-		return nil, errors.New("paystack secret key is not configured")
+		return nil, errors.New(
+			"paystack secret key is not configured",
+		)
 	}
 
 	requestBody := paystackInitializeRequest{
@@ -66,7 +68,10 @@ func (p *PaystackProvider) Initialize(
 
 	body, err := json.Marshal(requestBody)
 	if err != nil {
-		return nil, fmt.Errorf("marshal paystack request: %w", err)
+		return nil, fmt.Errorf(
+			"marshal paystack request: %w",
+			err,
+		)
 	}
 
 	req, err := http.NewRequestWithContext(
@@ -76,22 +81,41 @@ func (p *PaystackProvider) Initialize(
 		bytes.NewReader(body),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("create paystack request: %w", err)
+		return nil, fmt.Errorf(
+			"create paystack request: %w",
+			err,
+		)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+p.secretKey)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set(
+		"Authorization",
+		"Bearer "+p.secretKey,
+	)
+
+	req.Header.Set(
+		"Content-Type",
+		"application/json",
+	)
 
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("send paystack request: %w", err)
+		return nil, fmt.Errorf(
+			"send paystack request: %w",
+			err,
+		)
 	}
+
 	defer resp.Body.Close()
 
 	var result paystackInitializeResponse
 
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("decode paystack response: %w", err)
+	if err := json.NewDecoder(
+		resp.Body,
+	).Decode(&result); err != nil {
+		return nil, fmt.Errorf(
+			"decode paystack response: %w",
+			err,
+		)
 	}
 
 	if !result.Status {
@@ -114,7 +138,9 @@ func (p *PaystackProvider) Verify(
 ) (*PaymentVerification, error) {
 
 	if strings.TrimSpace(p.secretKey) == "" {
-		return nil, errors.New("paystack secret key is not configured")
+		return nil, errors.New(
+			"paystack secret key is not configured",
+		)
 	}
 
 	req, err := http.NewRequestWithContext(
@@ -124,21 +150,36 @@ func (p *PaystackProvider) Verify(
 		nil,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("create paystack verification request: %w", err)
+		return nil, fmt.Errorf(
+			"create paystack verification request: %w",
+			err,
+		)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+p.secretKey)
+	req.Header.Set(
+		"Authorization",
+		"Bearer "+p.secretKey,
+	)
 
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("send paystack verification request: %w", err)
+		return nil, fmt.Errorf(
+			"send paystack verification request: %w",
+			err,
+		)
 	}
+
 	defer resp.Body.Close()
 
 	var result paystackVerifyResponse
 
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("decode paystack verification response: %w", err)
+	if err := json.NewDecoder(
+		resp.Body,
+	).Decode(&result); err != nil {
+		return nil, fmt.Errorf(
+			"decode paystack verification response: %w",
+			err,
+		)
 	}
 
 	if !result.Status {
