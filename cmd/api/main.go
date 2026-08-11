@@ -9,6 +9,7 @@ import (
 	"github.com/rho-commerce/rho/internal/config"
 	"github.com/rho-commerce/rho/internal/database"
 	"github.com/rho-commerce/rho/internal/middleware"
+	"github.com/rho-commerce/rho/internal/product"
 	applogger "github.com/rho-commerce/rho/pkg/logger"
 )
 
@@ -39,6 +40,9 @@ func main() {
 		middleware.CORS(cfg.CORSOrigins),
 		gin.Recovery(),
 	)
+	productRepository := product.NewRepository(db)
+	productService := product.NewService(productRepository)
+	productHandler := product.NewHandler(productService)
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -47,6 +51,7 @@ func main() {
 	})
 
 	auth.RegisterRoutes(router, authHandler, cfg.JWTSecret)
+	product.RegisterRoutes(router, productHandler, cfg.JWTSecret)
 
 	appLogger.Info(
 		"starting Rho API",
