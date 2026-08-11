@@ -6,6 +6,7 @@ type Provider interface {
 	Initialize(
 		ctx context.Context,
 		payment *Payment,
+		email string,
 	) (*PaymentInitialization, error)
 
 	Verify(
