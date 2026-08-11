@@ -10,6 +10,7 @@ import (
 	"github.com/rho-commerce/rho/internal/category"
 	"github.com/rho-commerce/rho/internal/config"
 	"github.com/rho-commerce/rho/internal/database"
+	"github.com/rho-commerce/rho/internal/discount"
 	"github.com/rho-commerce/rho/internal/inventory"
 	"github.com/rho-commerce/rho/internal/middleware"
 	"github.com/rho-commerce/rho/internal/product"
@@ -65,6 +66,16 @@ func main() {
 	inventory.RegisterRoutes(
 		router,
 		inventoryHandler,
+		cfg.JWTSecret,
+	)
+
+	discountRepo := discount.NewRepository(db)
+	discountService := discount.NewService(discountRepo)
+	discountHandler := discount.NewHandler(discountService)
+
+	discount.RegisterRoutes(
+		router,
+		discountHandler,
 		cfg.JWTSecret,
 	)
 
