@@ -10,6 +10,7 @@ import (
 	"github.com/rho-commerce/rho/internal/category"
 	"github.com/rho-commerce/rho/internal/config"
 	"github.com/rho-commerce/rho/internal/database"
+	"github.com/rho-commerce/rho/internal/inventory"
 	"github.com/rho-commerce/rho/internal/middleware"
 	"github.com/rho-commerce/rho/internal/product"
 	applogger "github.com/rho-commerce/rho/pkg/logger"
@@ -57,6 +58,15 @@ func main() {
 	categoryHandler := category.NewHandler(categoryService)
 
 	category.RegisterRoutes(router, categoryHandler, cfg.JWTSecret)
+	inventoryRepo := inventory.NewRepository(db)
+	inventoryService := inventory.NewService(inventoryRepo)
+	inventoryHandler := inventory.NewHandler(inventoryService)
+
+	inventory.RegisterRoutes(
+		router,
+		inventoryHandler,
+		cfg.JWTSecret,
+	)
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
