@@ -16,6 +16,7 @@ import (
 	"github.com/rho-commerce/rho/internal/order"
 	"github.com/rho-commerce/rho/internal/payment"
 	"github.com/rho-commerce/rho/internal/product"
+	"github.com/rho-commerce/rho/internal/shipping"
 	applogger "github.com/rho-commerce/rho/pkg/logger"
 )
 
@@ -113,6 +114,15 @@ func main() {
 	payment.RegisterRoutes(
 		router,
 		paymentHandler,
+		cfg.JWTSecret,
+	)
+	shippingRepo := shipping.NewRepository(db)
+	shippingService := shipping.NewService(shippingRepo)
+	shippingHandler := shipping.NewHandler(shippingService)
+
+	shipping.RegisterRoutes(
+		router,
+		shippingHandler,
 		cfg.JWTSecret,
 	)
 
