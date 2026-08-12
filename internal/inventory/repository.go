@@ -6,7 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/rho-commerce/rho/internal/database"
 )
 
 var (
@@ -15,11 +15,15 @@ var (
 )
 
 type Repository struct {
-	db *pgxpool.Pool
+	db database.DBTX
 }
 
-func NewRepository(db *pgxpool.Pool) *Repository {
+func NewRepository(db database.DBTX) *Repository {
 	return &Repository{db: db}
+}
+
+func NewRepositoryWithTx(tx pgx.Tx) *Repository {
+	return &Repository{db: tx}
 }
 
 func (r *Repository) Create(
@@ -35,7 +39,7 @@ func (r *Repository) Create(
 			created_at,
 			updated_at
 		)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		VALUES ($1,$2,$3,$4,$5,$6)
 	`,
 		inventory.ID,
 		inventory.ProductID,
@@ -46,7 +50,6 @@ func (r *Repository) Create(
 	)
 
 	var pgErr *pgconn.PgError
-
 	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 		return ErrConflict
 	}

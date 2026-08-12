@@ -6,7 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/rho-commerce/rho/internal/database"
 )
 
 var (
@@ -16,11 +16,15 @@ var (
 )
 
 type Repository struct {
-	db *pgxpool.Pool
+	db database.DBTX
 }
 
-func NewRepository(db *pgxpool.Pool) *Repository {
+func NewRepository(db database.DBTX) *Repository {
 	return &Repository{db: db}
+}
+
+func NewRepositoryWithTx(tx pgx.Tx) *Repository {
+	return &Repository{db: tx}
 }
 
 func (r *Repository) GetByUserID(ctx context.Context, userID string) (*Cart, error) {

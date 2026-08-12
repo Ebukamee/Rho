@@ -5,30 +5,28 @@ import (
 	"errors"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/rho-commerce/rho/internal/database"
 )
 
 var ErrNotFound = errors.New("order not found")
 
 type Repository struct {
-	db *pgxpool.Pool
+	db database.DBTX
 }
 
-func NewRepository(db *pgxpool.Pool) *Repository {
+func NewRepository(db database.DBTX) *Repository {
 	return &Repository{db: db}
+}
+
+func NewRepositoryWithTx(tx pgx.Tx) *Repository {
+	return &Repository{db: tx}
 }
 
 func (r *Repository) Create(
 	ctx context.Context,
 	order *Order,
 ) error {
-	tx, err := r.db.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(ctx)
-
-	_, err = tx.Exec(ctx, `
+	_, err := r.db.Exec(ctx, `
 		INSERT INTO orders (
 			id,
 			user_id,
@@ -60,7 +58,7 @@ func (r *Repository) Create(
 	}
 
 	for _, item := range order.Items {
-		_, err = tx.Exec(ctx, `
+		_, err := r.db.Exec(ctx, `
 			INSERT INTO order_items (
 				id,
 				order_id,
@@ -90,14 +88,13 @@ func (r *Repository) Create(
 		}
 	}
 
-	return tx.Commit(ctx)
+	return nil
 }
 
 func (r *Repository) GetByID(
 	ctx context.Context,
 	id string,
 ) (*Order, error) {
-
 	var order Order
 
 	err := r.db.QueryRow(ctx, `
@@ -129,6 +126,10 @@ func (r *Repository) GetByID(
 		return nil, ErrNotFound
 	}
 
+	if err != nil {
+		return nil, err
+	}
+
 	rows, err := r.db.Query(ctx, `
 		SELECT
 			id,
@@ -148,12 +149,12 @@ func (r *Repository) GetByID(
 	}
 	defer rows.Close()
 
-	order.Items = []OrderItem{}
+	order.Items = make([]OrderItem, 0)
 
 	for rows.Next() {
 		var item OrderItem
 
-		rows.Scan(
+		if err := rows.Scan(
 			&item.ID,
 			&item.OrderID,
 			&item.ProductID,
@@ -162,9 +163,15 @@ func (r *Repository) GetByID(
 			&item.Quantity,
 			&item.UnitPrice,
 			&item.TotalPrice,
-		)
+		); err != nil {
+			return nil, err
+		}
 
 		order.Items = append(order.Items, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return &order, nil
@@ -175,7 +182,6 @@ func (r *Repository) UpdateStatus(
 	id string,
 	status OrderStatus,
 ) error {
-
 	result, err := r.db.Exec(ctx, `
 		UPDATE orders
 		SET
@@ -194,6 +200,7 @@ func (r *Repository) UpdateStatus(
 
 	return nil
 }
+
 func (r *Repository) GetByIDForUser(
 	ctx context.Context,
 	orderID string,

@@ -8,6 +8,7 @@ import (
 	"github.com/rho-commerce/rho/internal/auth"
 	"github.com/rho-commerce/rho/internal/cart"
 	"github.com/rho-commerce/rho/internal/category"
+	"github.com/rho-commerce/rho/internal/checkout"
 	"github.com/rho-commerce/rho/internal/config"
 	"github.com/rho-commerce/rho/internal/database"
 	"github.com/rho-commerce/rho/internal/discount"
@@ -123,6 +124,23 @@ func main() {
 	shipping.RegisterRoutes(
 		router,
 		shippingHandler,
+		cfg.JWTSecret,
+	)
+
+	checkoutService := checkout.NewService(
+		db,
+		cartRepo,
+		productRepository,
+		discountService,
+	)
+
+	checkoutHandler := checkout.NewHandler(
+		checkoutService,
+	)
+
+	checkout.RegisterRoutes(
+		router,
+		checkoutHandler,
 		cfg.JWTSecret,
 	)
 
