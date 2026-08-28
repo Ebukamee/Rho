@@ -3,21 +3,24 @@ package config
 import (
 	"log"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	Port               string
-	Environment        string
-	DatabaseURL        string
-	JWTSecret          string
-	PaystackSecretKey  string
-	CORSOrigins        []string
-	GoogleClientID     string
-	GoogleClientSecret string
-	GoogleRedirectURL  string
+	Port                   string
+	Environment            string
+	DatabaseURL            string
+	JWTSecret              string
+	PaystackSecretKey      string
+	CORSOrigins            []string
+	GoogleClientID         string
+	GoogleClientSecret     string
+	GoogleRedirectURL      string
+	RateLimitRequests      int
+	RateLimitWindowSeconds int
 }
 
 func Load() *Config {
@@ -26,15 +29,17 @@ func Load() *Config {
 	}
 
 	return &Config{
-		Port:               getEnv("PORT", "8080"),
-		Environment:        getEnv("ENVIRONMENT", "development"),
-		DatabaseURL:        getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/rho?sslmode=disable"),
-		JWTSecret:          getEnv("JWT_SECRET", ""),
-		PaystackSecretKey:  getEnv("PAYSTACK_SECRET_KEY", ""),
-		CORSOrigins:        splitCSV(getEnv("CORS_ORIGINS", "http://localhost:3000")),
-		GoogleClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
-		GoogleClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
-		GoogleRedirectURL:  getEnv("GOOGLE_REDIRECT_URL", "http://localhost:8080/api/v1/auth/google/callback"),
+		Port:                   getEnv("PORT", "8080"),
+		Environment:            getEnv("ENVIRONMENT", "development"),
+		DatabaseURL:            getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/rho?sslmode=disable"),
+		JWTSecret:              getEnv("JWT_SECRET", ""),
+		PaystackSecretKey:      getEnv("PAYSTACK_SECRET_KEY", ""),
+		CORSOrigins:            splitCSV(getEnv("CORS_ORIGINS", "http://localhost:3000")),
+		GoogleClientID:         getEnv("GOOGLE_CLIENT_ID", ""),
+		GoogleClientSecret:     getEnv("GOOGLE_CLIENT_SECRET", ""),
+		GoogleRedirectURL:      getEnv("GOOGLE_REDIRECT_URL", "http://localhost:8080/api/v1/auth/google/callback"),
+		RateLimitRequests:      atoi(getEnv("RATE_LIMIT_REQUESTS", "60")),
+		RateLimitWindowSeconds: atoi(getEnv("RATE_LIMIT_WINDOW_SECONDS", "60")),
 	}
 }
 
@@ -54,4 +59,12 @@ func splitCSV(value string) []string {
 		}
 	}
 	return origins
+}
+
+func atoi(value string) int {
+	v, err := strconv.Atoi(value)
+	if err != nil || v <= 0 {
+		return 0
+	}
+	return v
 }

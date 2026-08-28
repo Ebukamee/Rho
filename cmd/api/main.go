@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rho-commerce/rho/internal/auth"
@@ -46,6 +47,7 @@ func main() {
 	router.Use(
 		middleware.RequestLogger(appLogger),
 		middleware.CORS(cfg.CORSOrigins),
+		middleware.RateLimit(cfg.RateLimitRequests, time.Duration(cfg.RateLimitWindowSeconds)*time.Second),
 		gin.Recovery(),
 	)
 	productRepository := product.NewRepository(db)
