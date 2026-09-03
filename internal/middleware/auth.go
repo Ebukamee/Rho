@@ -74,8 +74,11 @@ func AuthRequired(jwtSecret string) gin.HandlerFunc {
 			return
 		}
 
+		email, _ := claims["email"].(string)
+
 		c.Set("user_id", userID)
 		c.Set("role", role)
+		c.Set("email", email)
 		c.Next()
 	}
 }

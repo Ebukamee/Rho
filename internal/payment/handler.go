@@ -53,7 +53,7 @@ func (h *Handler) Initialize(c *gin.Context) {
 
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "failed to initialize payment",
+				"error": err.Error(),
 			})
 		}
 
